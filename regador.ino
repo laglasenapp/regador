@@ -2,38 +2,13 @@
 #include <ArduinoJson.h>
 
 
-//  char* wifiCredentialsUser[connectionSize] = { "NET_2GE7D83B", "Glasenapp's home"};
-//  char* wifiCredentialsPw[connectionSize] = { "65E7D83B", "anschliessend"};
 const char* ssid     = "NET_2GE7D83B";         // The SSID (name) of the Wi-Fi network you want to connect to
 const char* password = "65E7D83B";     // The password of the Wi-Fi network
 const char* server = "www.smarthomecontrol.com.br";
 const byte port = 80;
-const size_t capacity = JSON_OBJECT_SIZE(8) + 75;
-
+const size_t capacity = JSON_OBJECT_SIZE(8) + 400;
+short counter = 0;
 byte mac[6];
-
-unsigned int array1[8];
-unsigned int array2[8];
-unsigned int array3[8];
-unsigned int array4[8];
-unsigned int array5[8];
-unsigned int array6[8];
-unsigned int array7[8];
-unsigned int array8[8];
-unsigned int array9[8];
-unsigned int array10[8];
-
-
-byte array1_idx = 0;
-byte array2_idx = 0;
-byte array3_idx = 0;
-byte array4_idx = 0;
-byte array5_idx = 0;
-byte array6_idx = 0;
-byte array7_idx = 0;
-byte array8_idx = 0;
-byte array9_idx = 0;
-byte array10_idx = 0;
 
 bool wifiInitiated = false;
 
@@ -101,6 +76,8 @@ void loop() {
   while (conectWifi()) {
     break;
   }
+  uint32_t timer_start = millis();
+  uint32_t time_diff = 0;
 
   Serial.print("connecting to ");
   Serial.print(server);
@@ -167,20 +144,41 @@ void loop() {
   }
 
   byte enabled = jsonBuffer["enabled"]; //enabled
-  int s1 = jsonBuffer["s1"]; //s1
-  int s2 = jsonBuffer["s2"]; //s2
-  int s3 = jsonBuffer["s3"]; //s3
-  int s4 = jsonBuffer["s4"]; //s4
-  int s5 = jsonBuffer["s5"]; //s5
-  int s6 = jsonBuffer["s6"]; //s6
-  int s7 = jsonBuffer["s7"]; //s7
-  int s8 = jsonBuffer["s8"]; //s8
+  short s1 = jsonBuffer["s1"]; //s1
+  short s2 = jsonBuffer["s2"]; //s2
+  short s3 = jsonBuffer["s3"]; //s3
+  short s4 = jsonBuffer["s4"]; //s4
+  short s5 = jsonBuffer["s5"]; //s5
+  short s6 = jsonBuffer["s6"]; //s6
+  short s7 = jsonBuffer["s7"]; //s7
+  short s8 = jsonBuffer["s8"]; //s8
+  short year = jsonBuffer["current_time_year"];
+  short month = jsonBuffer["current_time_month"];
+  short day = jsonBuffer["current_time_day"];
+  short hour = jsonBuffer["current_time_hour"];
+  short minute = jsonBuffer["current_time_minute"];
+  short second = jsonBuffer["current_time_second"];
 
+  
+  Serial.println(year);
+  Serial.println(month);
+  Serial.println(day);
+  Serial.println(hour);
+  Serial.println(minute);
+  Serial.println(second);
+  Serial.println("LUBI 0 ");
   if (enabled == 1) {
     if (s1 > 0) {
+      Serial.println("LUBI");
       digitalWrite(D1, LOW);
       delay(s1);
       digitalWrite(D1, HIGH);
+      time_diff = millis() - timer_start;
+      
+      Serial.println(time_diff);
+      //uint32_t calc = current_time_server + time_diff;
+      //Serial.println(calc);
+      
     } //s1
 
     if (s2 > 0) {
@@ -226,6 +224,14 @@ void loop() {
     } //s8
 
   } //if enabled
-  Serial.println("Delay of 1 hour");
-  delay(300000); // execute once every 5 minutes, don't flood remote service
+  
+  if (counter > 20) {
+    Serial.println("Reseting...");
+    ESP.restart();
+  } else {
+    Serial.println("Delay of 1 hour");
+    counter++;
+    delay(60 * 60 * 1000); // execute once every 5 minutes, don't flood remote service
+  }
+
 }
