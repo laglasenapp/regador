@@ -2,14 +2,16 @@
 #include <ArduinoJson.h>
 
 
-const char* ssid     = "NET_2GE7D83B";         // The SSID (name) of the Wi-Fi network you want to connect to
-const char* password = "65E7D83B";     // The password of the Wi-Fi network
+//const char* ssid     = "NET_2GE7D83B";         // The SSID (name) of the Wi-Fi network you want to connect to
+//const char* password = "65E7D83B";     // The password of the Wi-Fi network
+const char* ssid     = "Glasenapp's home";         // The SSID (name) of the Wi-Fi network you want to connect to
+const char* password = "anschliessend";     // The password of the Wi-Fi network
 const char* server = "www.smarthomecontrol.com.br";
 const byte port = 80;
 const size_t capacity = JSON_OBJECT_SIZE(8) + 400;
 short counter = 0;
 byte mac[6];
-
+const short device_id = 1;
 bool wifiInitiated = false;
 
 bool conectWifi() {
@@ -95,7 +97,7 @@ void loop() {
   // This will send a string to the server
   Serial.println("sending data to server");
   if (client.connected()) {
-    client.println("GET http://www.smarthomecontrol.com.br/regador/ HTTP/1.1");
+    client.println("GET http://www.smarthomecontrol.com.br/regador/scheduler_monitoring.php HTTP/1.1");
     client.println("Host: smarthomecontrol.com.br");
     client.println("Authorization: Basic cmVnMDpyZWcwcHc=");
     client.println("Connection: close");
@@ -129,12 +131,12 @@ void loop() {
     return;
   }
 
-  // Close the connection
-  Serial.println();
-  Serial.println("closing connection");
-  client.stop();
+  
 
   DynamicJsonDocument jsonBuffer(capacity);
+
+
+  
   DeserializationError error = deserializeJson(jsonBuffer, client);
   if (error) {
     Serial.println("Error: ");
@@ -152,86 +154,97 @@ void loop() {
   short s6 = jsonBuffer["s6"]; //s6
   short s7 = jsonBuffer["s7"]; //s7
   short s8 = jsonBuffer["s8"]; //s8
-  short year = jsonBuffer["current_time_year"];
-  short month = jsonBuffer["current_time_month"];
-  short day = jsonBuffer["current_time_day"];
-  short hour = jsonBuffer["current_time_hour"];
-  short minute = jsonBuffer["current_time_minute"];
-  short second = jsonBuffer["current_time_second"];
 
-  
-  Serial.println(year);
-  Serial.println(month);
-  Serial.println(day);
-  Serial.println(hour);
-  Serial.println(minute);
-  Serial.println(second);
-  Serial.println("LUBI 0 ");
+
+
   if (enabled == 1) {
     if (s1 > 0) {
-      Serial.println("LUBI");
       digitalWrite(D1, LOW);
       delay(s1);
       digitalWrite(D1, HIGH);
-      time_diff = millis() - timer_start;
-      
-      Serial.println(time_diff);
-      //uint32_t calc = current_time_server + time_diff;
-      //Serial.println(calc);
-      
+      sendInfoToServer(client, "s1");     
     } //s1
 
     if (s2 > 0) {
       digitalWrite(D2, LOW);
       delay(s2);
       digitalWrite(D2, HIGH);
+      sendInfoToServer(client, "s2");
     } //s2
 
     if (s3 > 0) {
       digitalWrite(D3, LOW);
       delay(s3);
       digitalWrite(D3, HIGH);
+      sendInfoToServer(client, "s3");
     } //s3
 
     if (s4 > 0) {
       digitalWrite(D4, LOW);
       delay(s4);
       digitalWrite(D4, HIGH);
+      sendInfoToServer(client, "s4");
     } //s4
 
     if (s5 > 0) {
       digitalWrite(D5, LOW);
       delay(s5);
       digitalWrite(D5, HIGH);
+      sendInfoToServer(client, "s5");
     } //s5
 
     if (s6 > 0) {
       digitalWrite(D6, LOW);
       delay(s6);
       digitalWrite(D6, HIGH);
+      sendInfoToServer(client, "s6");
     } //s6
 
     if (s7 > 0) {
       digitalWrite(D7, LOW);
       delay(s7);
       digitalWrite(D7, HIGH);
+      sendInfoToServer(client, "s7");
     } //s7
 
     if (s8 > 0) {
       digitalWrite(D8, LOW);
       delay(s8);
       digitalWrite(D8, HIGH);
+      sendInfoToServer(client, "s8");
     } //s8
 
   } //if enabled
+
+  // Close the connection
+  Serial.println();
+  Serial.println("closing connection");
+  client.stop();
   
-  if (counter > 20) {
+  if (counter > 48) {
     Serial.println("Reseting...");
     ESP.restart();
   } else {
     Serial.println("Delay of 1 hour");
     counter++;
-    delay(60 * 60 * 1000); // execute once every 5 minutes, don't flood remote service
+    delay(60 * 60 * 1000);
   }
 
+}
+
+
+void sendInfoToServer(WiFiClient client, String idRegister) {
+  if (!client.connect(server, port)) {
+    Serial.println("connection failed");
+    delay(5000);
+    return;
+  } else {
+    String url = "http://smarthomecontrol.com.br/regador/last_execution_monitoring.php?id=" + String(device_id) + "&register_id=" + String(idRegister);
+    Serial.println("URL: " + url);
+    client.println("GET " + url + " HTTP/1.1");
+    client.println("Host: smarthomecontrol.com.br");
+    client.println("Authorization: Basic cmVnMDpyZWcwcHc=");
+    client.println("Connection: close");
+    client.println();
+  }
 }
